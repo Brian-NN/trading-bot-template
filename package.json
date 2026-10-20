@@ -191,7 +191,7 @@
         "qs": "6.15.2",
         "ws": "8.21.0",
         "uuid": "^11.1.1",
-        "shell-quote": "^1.9.0",
+        "shell-quote": "^1.11.0",
         "tar": "7.5.22",
         "ip-address": "10.3.1",
         "@xmldom/xmldom": "0.8.15",
@@ -202,6 +202,7 @@
         "websocket-driver": "0.7.5",
         "http-proxy-middleware": "2.0.10",
         "launch-editor": "2.14.1",
-        "npm": "^11.20.0"
+        "npm": "^11.20.0",
+        "proxy-addr": "2.0.8"
     }
 }
