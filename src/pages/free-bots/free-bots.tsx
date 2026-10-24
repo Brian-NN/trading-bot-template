@@ -1,5 +1,6 @@
 import React from 'react';
 import { DBOT_TABS } from '@/constants/bot-contents';
+import { useStore } from '@/hooks/useStore';
 import './free-bots.scss';
 
 interface BotCard {
@@ -14,24 +15,23 @@ interface BotCard {
 
 const BOTS_LIST: BotCard[] = [
     {
-        id: 'bot-1',
-        title: 'EVEN ODD KING',
-        badge: 'EVEN ODD',
-        badgeColor: '#0096FF',
-        buttonColor: '#0096FF',
-        imageUrl: '/bots/evenodd.jpg',
+        id: 'even-odd-ai',
+        title: 'Even Odd AI Strategy',
+        badge: 'EVEN / ODD',
+        badgeColor: '#10b981',
+        buttonColor: '#10b981',
+        imageUrl: '/bots/even_odd_preview.jpg',
         xmlUrl: '/bots/EO_AI.xml',
     },
     {
-        id: 'bot-2',
-        title: 'Differs Master',
-        badge: 'Differs',
-        badgeColor: '#0096FF',
-        buttonColor: '#0096FF',
-        imageUrl: '/bots/evenodd.jpg',
-        xmlUrl: '/bots/Differs.xml',
+        id: 'nexus-speedbot',
+        title: 'Nexus Speedbot V5',
+        badge: 'TICK VOLATILITY',
+        badgeColor: '#8b5cf6',
+        buttonColor: '#8b5cf6',
+        imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60',
+        xmlUrl: '/bots/nexus_speedbot.xml',
     },
-   
 ];
 
 interface FreeBotsProps {
@@ -39,23 +39,54 @@ interface FreeBotsProps {
 }
 
 const FreeBots: React.FC<FreeBotsProps> = ({ handleTabChange }) => {
+    const { load_modal } = useStore();
+
     const handleLoadBot = async (bot: BotCard) => {
         try {
             const response = await fetch(bot.xmlUrl);
             const xmlText = await response.text();
 
-            // Load into Deriv's Blockly workspace
-            const blockly = (window as any).Blockly;
-            if (blockly?.derivWorkspace) {
-                const dom = blockly.utils.xml.textToDom(xmlText);
-                blockly.derivWorkspace.clear();
-                blockly.Xml.domToWorkspace(dom, blockly.derivWorkspace);
-            }
-
-            // Switch to Bot Builder tab
+            // 1. Switch tab first so the Bot Builder SVG workspace is mounted and visible
             handleTabChange(DBOT_TABS.BOT_BUILDER);
+
+            // 2. Allow the DOM to paint the workspace before injecting strategy blocks
+            setTimeout(async () => {
+                try {
+                    const blockly = (window as any).Blockly;
+                    const workspace = blockly?.derivWorkspace;
+
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+                    // Deriv's official store loader (expects a parsed XML DOM Document)
+                    if (typeof load_modal?.loadStrategy === 'function') {
+                        await load_modal.loadStrategy(xmlDoc);
+                    } else if (workspace && blockly) {
+                        // Direct workspace injection fallback with suppressed validation events
+                        blockly.Events.disable();
+                        workspace.clear();
+
+                        const xmlDom = blockly.utils.xml.textToDom(xmlText);
+                        blockly.Xml.domToWorkspace(xmlDom, workspace);
+
+                        blockly.Events.enable();
+
+                        if (typeof workspace.cleanUp === 'function') {
+                            workspace.cleanUp();
+                        }
+                        if (typeof workspace.centerOnBlock === 'function') {
+                            const topBlocks = workspace.getTopBlocks(true);
+                            if (topBlocks.length > 0) {
+                                workspace.centerOnBlock(topBlocks[0].id);
+                            }
+                        }
+                    }
+                } catch (innerError) {
+                    console.error('Error during workspace XML insertion:', innerError);
+                }
+            }, 100);
         } catch (error) {
-            console.error('Failed to load bot XML:', error);
+            console.error('Failed to fetch bot XML:', error);
             handleTabChange(DBOT_TABS.BOT_BUILDER);
         }
     };
