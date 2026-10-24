@@ -1,5 +1,5 @@
 {
-    "brand_name": "YourBrand",
+    "brand_name": "bnntradinghub",
     "brand_domain": "yourbrand.com",
     "brand_hostname": {
         "staging": "staging.yourbrand.com/dashboard",
@@ -7,7 +7,7 @@
     },
     "domain_name": "YourBrand.com",
     "colors": {
-        "primary": "#3b82f6",
+        "primary": "#0096FF",
         "secondary": "#64748b",
         "tertiary": "#8b5cf6",
         "success": "#10b981",
