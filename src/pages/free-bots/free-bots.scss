@@ -1,0 +1,121 @@
+.free-bots-container {
+    padding: 2rem 3rem 6rem;
+    background: #f8fafc;
+    min-height: calc(100vh - 120px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    .free-bots-hero {
+        margin-bottom: 2rem;
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .free-bots-subtitle {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            margin: 4px 0 0;
+        }
+
+        .free-bots-desc {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+    }
+
+    .free-bots-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+
+        @media (max-width: 1024px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 640px) {
+            grid-template-columns: 1fr;
+        }
+
+        .free-bot-card {
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+            &:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            }
+
+            .free-bot-badge {
+                position: absolute;
+                top: 12px;
+                left: 12px;
+                padding: 4px 10px;
+                border-radius: 9999px;
+                color: #ffffff;
+                font-size: 0.65rem;
+                font-weight: 800;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                z-index: 2;
+            }
+
+            .free-bot-image-wrap {
+                width: 100%;
+                height: 180px;
+                overflow: hidden;
+                background: #0f172a;
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+            }
+
+            .free-bot-footer {
+                padding: 1rem 1.25rem 1.25rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.85rem;
+
+                .free-bot-title {
+                    margin: 0;
+                    font-size: 1.05rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                }
+
+                .free-bot-load-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    width: 100%;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 8px;
+                    color: #ffffff;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: opacity 0.2s ease;
+
+                    &:hover {
+                        opacity: 0.9;
+                    }
+                }
+            }
+        }
+    }
+}
