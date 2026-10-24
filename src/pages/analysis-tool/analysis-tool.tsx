@@ -6,6 +6,7 @@ interface TickData {
     quote: number;
     pip_size: number;
     epoch: number;
+    symbol?: string;
 }
 
 const MARKETS = [
@@ -34,20 +35,23 @@ const AnalysisTool: React.FC = () => {
     const [selectedOverUnder, setSelectedOverUnder] = useState<number>(4);
     const [selectedMatchDiffer, setSelectedMatchDiffer] = useState<number>(5);
 
-    const wsRef = useRef<WebSocket | null>(null);
+    const wsFallbackRef = useRef<WebSocket | null>(null);
+    const activeSubIdRef = useRef<string | null>(null);
 
     useEffect(() => {
-        let subscriptionId: string | null = null;
         let isCancelled = false;
+        let subscriber: any = null;
 
         setConnectionStatus('connecting');
 
-        const subscribeTicks = async () => {
+        const connectAndSubscribe = async () => {
             try {
+                // Poll api_base with higher patience for mobile connections (up to 40 x 300ms = 12s)
                 let api = api_base.api;
                 let attempts = 0;
-                while ((!api || !api.connection || api.connection.readyState !== WebSocket.OPEN) && attempts < 20) {
-                    await new Promise((r) => setTimeout(r, 250));
+                while ((!api || !api.connection || api.connection.readyState !== WebSocket.OPEN) && attempts < 40) {
+                    if (isCancelled) return;
+                    await new Promise((r) => setTimeout(r, 300));
                     api = api_base.api;
                     attempts++;
                 }
@@ -55,6 +59,14 @@ const AnalysisTool: React.FC = () => {
                 if (api && api.connection && api.connection.readyState === WebSocket.OPEN) {
                     setConnectionStatus('connected');
 
+                    // Clean any existing tick streams first
+                    try {
+                        await (api as any).send({ forget_all: 'ticks' });
+                    } catch (_) {}
+
+                    if (isCancelled) return;
+
+                    // Request tick history with stream subscription
                     const response = await (api as any).send({
                         ticks_history: selectedMarket,
                         adjust_start_time: 1,
@@ -68,41 +80,42 @@ const AnalysisTool: React.FC = () => {
                     if (isCancelled) return;
 
                     if (response?.history?.prices) {
-                        const prices: number[] = response.history.prices;
+                        const parsedPrices: number[] = response.history.prices.map((p: any) => Number(p));
                         const pips: number = response.history.pip_size ?? 2;
                         setPriceDecimals(pips);
-                        if (prices.length > 0) {
-                            setCurrentPrice(prices[prices.length - 1]);
-                            setTicksHistory(prices.slice(-tickCount));
+                        if (parsedPrices.length > 0) {
+                            const last = parsedPrices[parsedPrices.length - 1];
+                            setCurrentPrice(last);
+                            setTicksHistory(parsedPrices.slice(-tickCount));
                         }
                     }
 
-                    if (response?.subscription) {
-                        subscriptionId = response.subscription.id;
+                    if (response?.subscription?.id) {
+                        activeSubIdRef.current = response.subscription.id;
                     }
 
-                    const subscriber = (api as any).onMessage().subscribe(({ data }: any) => {
-                        if (data?.msg_type === 'tick' && data?.tick?.symbol === selectedMarket) {
-                            const tick = data.tick;
-                            setPriceDecimals(tick.pip_size ?? 2);
-                            setCurrentPrice((prev) => {
-                                setPrevPrice(prev);
-                                return tick.quote;
-                            });
-                            setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), tick.quote]);
+                    // Real-time tick message listener
+                    subscriber = (api as any).onMessage().subscribe(({ data }: any) => {
+                        if (data?.msg_type === 'tick') {
+                            const tick: TickData = data.tick;
+                            if (tick && (tick.symbol === selectedMarket || !tick.symbol)) {
+                                const quote = Number(tick.quote);
+                                if (!isNaN(quote)) {
+                                    setPriceDecimals(tick.pip_size ?? 2);
+                                    setCurrentPrice((prev) => {
+                                        setPrevPrice(prev);
+                                        return quote;
+                                    });
+                                    setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), quote]);
+                                }
+                            }
                         }
                     });
-
-                    return () => {
-                        subscriber.unsubscribe();
-                        if (subscriptionId) {
-                            (api as any).send({ forget: subscriptionId }).catch(() => {});
-                        }
-                    };
                 } else {
-                    const serverUrl = 'wss://ws.derivws.com/websockets/v3?app_id=1089&brand=deriv';
+                    // Mobile fallback: Deriv secure production endpoint
+                    const serverUrl = 'wss://ws.derivws.com/websockets/v3?app_id=1089';
                     const ws = new WebSocket(serverUrl);
-                    wsRef.current = ws;
+                    wsFallbackRef.current = ws;
 
                     ws.onopen = () => {
                         if (isCancelled) return;
@@ -121,54 +134,73 @@ const AnalysisTool: React.FC = () => {
                     };
 
                     ws.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        if (data.msg_type === 'history') {
-                            const prices: number[] = data.history?.prices || [];
-                            setPriceDecimals(data.history?.pip_size ?? 2);
-                            if (prices.length > 0) {
-                                setCurrentPrice(prices[prices.length - 1]);
-                                setTicksHistory(prices.slice(-tickCount));
+                        try {
+                            const data = JSON.parse(event.data);
+                            if (data.msg_type === 'history') {
+                                const parsedPrices: number[] = (data.history?.prices || []).map((p: any) => Number(p));
+                                setPriceDecimals(data.history?.pip_size ?? 2);
+                                if (parsedPrices.length > 0) {
+                                    setCurrentPrice(parsedPrices[parsedPrices.length - 1]);
+                                    setTicksHistory(parsedPrices.slice(-tickCount));
+                                }
+                            } else if (data.msg_type === 'tick') {
+                                const tick: TickData = data.tick;
+                                if (tick?.quote !== undefined) {
+                                    const quote = Number(tick.quote);
+                                    setPriceDecimals(tick.pip_size ?? 2);
+                                    setCurrentPrice((prev) => {
+                                        setPrevPrice(prev);
+                                        return quote;
+                                    });
+                                    setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), quote]);
+                                }
                             }
-                        } else if (data.msg_type === 'tick') {
-                            const tick = data.tick;
-                            setPriceDecimals(tick.pip_size ?? 2);
-                            setCurrentPrice((prev) => {
-                                setPrevPrice(prev);
-                                return tick.quote;
-                            });
-                            setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), tick.quote]);
+                        } catch (err) {
+                            console.error('Tick parsing error:', err);
                         }
                     };
 
                     ws.onerror = () => setConnectionStatus('error');
                 }
             } catch (err) {
-                console.error('Error establishing tick stream:', err);
+                console.error('Tick streaming error:', err);
                 setConnectionStatus('error');
             }
         };
 
-        const cleanupPromise = subscribeTicks();
+        connectAndSubscribe();
 
         return () => {
             isCancelled = true;
-            cleanupPromise.then((cleanup) => cleanup && cleanup());
-            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                wsRef.current.send(JSON.stringify({ forget_all: 'ticks' }));
-                wsRef.current.close();
+            if (subscriber) {
+                subscriber.unsubscribe();
+            }
+            if (activeSubIdRef.current && api_base.api) {
+                (api_base.api as any).send({ forget: activeSubIdRef.current }).catch(() => {});
+                activeSubIdRef.current = null;
+            }
+            if (wsFallbackRef.current && wsFallbackRef.current.readyState === WebSocket.OPEN) {
+                wsFallbackRef.current.send(JSON.stringify({ forget_all: 'ticks' }));
+                wsFallbackRef.current.close();
+                wsFallbackRef.current = null;
             }
         };
     }, [selectedMarket, tickCount]);
 
+    // Parse last digits with safety checks
     const lastDigits = useMemo(() => {
-        return ticksHistory.map((price) => {
-            const formatted = price.toFixed(priceDecimals);
-            return parseInt(formatted.slice(-1), 10);
-        });
+        return ticksHistory
+            .map((price) => {
+                if (typeof price !== 'number' || isNaN(price)) return null;
+                const formatted = price.toFixed(priceDecimals);
+                return parseInt(formatted.slice(-1), 10);
+            })
+            .filter((d): d is number => d !== null && !isNaN(d));
     }, [ticksHistory, priceDecimals]);
 
     const latestDigit = lastDigits.length > 0 ? lastDigits[lastDigits.length - 1] : null;
 
+    // Digit frequencies (0 - 9)
     const digitStats = useMemo(() => {
         const counts = Array(10).fill(0);
         lastDigits.forEach((d) => counts[d]++);
@@ -189,6 +221,7 @@ const AnalysisTool: React.FC = () => {
         return { indexed, most, second, least };
     }, [lastDigits]);
 
+    // Even / Odd stats
     const evenOddStats = useMemo(() => {
         if (!lastDigits.length) return { evenPct: '50.0', oddPct: '50.0', recent: [] };
         const evenCount = lastDigits.filter((d) => d % 2 === 0).length;
@@ -199,6 +232,7 @@ const AnalysisTool: React.FC = () => {
         return { evenPct, oddPct, recent };
     }, [lastDigits]);
 
+    // Rise / Fall stats
     const riseFallStats = useMemo(() => {
         if (ticksHistory.length < 2) return { risePct: '50.0', fallPct: '50.0', recent: [] };
         let rises = 0;
@@ -220,6 +254,7 @@ const AnalysisTool: React.FC = () => {
         return { risePct, fallPct, recent };
     }, [ticksHistory]);
 
+    // Over / Under calculated for selectedOverUnder
     const overUnderStats = useMemo(() => {
         if (!lastDigits.length) return { over: '50.0', under: '50.0' };
         const overCount = lastDigits.filter((d) => d > selectedOverUnder).length;
@@ -231,6 +266,7 @@ const AnalysisTool: React.FC = () => {
         };
     }, [lastDigits, selectedOverUnder]);
 
+    // Matches / Differs calculated for selectedMatchDiffer
     const matchDifferStats = useMemo(() => {
         if (!lastDigits.length) return { match: '10.0', differ: '90.0' };
         const matchCount = lastDigits.filter((d) => d === selectedMatchDiffer).length;
@@ -300,7 +336,9 @@ const AnalysisTool: React.FC = () => {
                 <div className="cat-price-banner">
                     <div className="cat-price-title">CURRENT PRICE</div>
                     <div className="cat-price-val" style={{ color: priceColor }}>
-                        {currentPrice !== null ? currentPrice.toFixed(priceDecimals) : 'Connecting...'}
+                        {currentPrice !== null && !isNaN(currentPrice)
+                            ? currentPrice.toFixed(priceDecimals)
+                            : 'Connecting...'}
                     </div>
                     {latestDigit !== null && (
                         <div className="cat-latest-digit-pill">
