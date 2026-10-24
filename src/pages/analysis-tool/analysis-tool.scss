@@ -1,0 +1,166 @@
+.analysis-tool-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--brand-dark, #0f172a);
+
+  .analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--brand-grey-50, #f8fafc);
+    padding: 18px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--brand-grey-200, #e2e8f0);
+
+    .controls-left {
+      display: flex;
+      gap: 20px;
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: var(--brand-grey-600, #475569);
+
+        select, input {
+          background: #ffffff;
+          border: 1px solid var(--brand-grey-300, #cbd5e1);
+          color: #0f172a;
+          padding: 8px 12px;
+          border-radius: 4px;
+        }
+      }
+    }
+
+    .price-callout {
+      text-align: right;
+
+      .price-val {
+        font-size: 1.8rem;
+        font-weight: 700;
+        &.rise { color: var(--brand-success, #10b981); }
+        &.fall { color: var(--brand-danger, #ef4444); }
+      }
+
+      .latest-digit span {
+        font-weight: 800;
+        color: var(--brand-warning, #d97706);
+      }
+    }
+  }
+
+  .legend-bar {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      &.rank-most { background: rgba(16, 185, 129, 0.15); color: #059669; border: 1px solid #10b981; }
+      &.rank-second-most { background: rgba(0, 150, 255, 0.15); color: #0284c7; border: 1px solid #0096ff; }
+      &.rank-second-least { background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid #f59e0b; }
+      &.rank-least { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid #ef4444; }
+    }
+  }
+
+  .digit-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+
+    .digit-card {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid var(--brand-grey-200, #e2e8f0);
+      border-radius: 8px;
+      padding: 16px 8px;
+      text-align: center;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+
+      .cursor-indicator {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        color: var(--brand-warning, #d97706);
+      }
+
+      &.active-cursor {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+      }
+
+      &.rank-most { border-color: #10b981; }
+      &.rank-second-most { border-color: #0096ff; }
+      &.rank-second-least { border-color: #f59e0b; }
+      &.rank-least { border-color: #ef4444; }
+
+      .digit-value { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; color: #0f172a; }
+      .digit-percent { font-size: 0.9rem; font-weight: 600; color: var(--brand-grey-700, #334155); }
+      .digit-count { font-size: 0.7rem; color: var(--brand-grey-500, #64748b); }
+    }
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+
+    .metric-box {
+      background: #ffffff;
+      border: 1px solid var(--brand-grey-200, #e2e8f0);
+      border-radius: 8px;
+      padding: 16px;
+
+      h4 { margin-top: 0; font-size: 0.95rem; margin-bottom: 12px; color: #0f172a; }
+
+      .threshold-selector {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 12px;
+
+        button {
+          flex: 1;
+          background: var(--brand-grey-100, #f1f5f9);
+          border: 1px solid var(--brand-grey-300, #cbd5e1);
+          color: #0f172a;
+          padding: 4px 0;
+          font-size: 0.75rem;
+          border-radius: 4px;
+          cursor: pointer;
+
+          &.active {
+            background: var(--brand-primary, #0096ff);
+            border-color: var(--brand-primary, #0096ff);
+            color: #ffffff;
+          }
+        }
+      }
+
+      .metric-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .progress-bar {
+        display: flex;
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+
+        .fill.even { background: #0096ff; }
+        .fill.odd { background: #8b5cf6; }
+      }
+    }
+  }
+}
