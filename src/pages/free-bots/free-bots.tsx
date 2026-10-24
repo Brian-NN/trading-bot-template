@@ -18,7 +18,7 @@ const BOTS_LIST: BotCard[] = [
         title: 'EVEN ODD KING',
         badge: 'EVEN ODD',
         badgeColor: '#0096FF',
-        buttonColor: '#0096FF6',
+        buttonColor: '#0096FF',
         imageUrl: '/bots/evenodd.jpg',
         xmlUrl: '/bots/EO_AI.xml',
     },
