@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { api_base } from '@/external/bot-skeleton';
 import './analysis-tool.scss';
 
 interface TickData {
@@ -37,57 +38,130 @@ const AnalysisTool: React.FC = () => {
     const wsRef = useRef<WebSocket | null>(null);
 
     // Connect & subscribe to Deriv ticks
+   // Connect & subscribe using Deriv's existing api_base
     useEffect(() => {
+        let subscriptionId: string | null = null;
+        let isCancelled = false;
+
         setConnectionStatus('connecting');
-        const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
-        wsRef.current = ws;
 
-        ws.onopen = () => {
-            setConnectionStatus('connected');
-            // Request history + subscription
-            ws.send(JSON.stringify({
-                ticks_history: selectedMarket,
-                adjust_start_time: 1,
-                count: tickCount,
-                end: 'latest',
-                start: 1,
-                style: 'ticks',
-                subscribe: 1,
-            }));
-        };
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.msg_type === 'history') {
-                const prices: number[] = data.history?.prices || [];
-                const pips: number = data.history?.pip_size ?? 2;
-                setPriceDecimals(pips);
-                if (prices.length > 0) {
-                    const last = prices[prices.length - 1];
-                    setCurrentPrice(last);
-                    setTicksHistory(prices.slice(-tickCount));
+        const subscribeTicks = async () => {
+            try {
+                // 1. Wait until api_base has an active connection
+                let api = api_base.api;
+                let attempts = 0;
+                while ((!api || !api.connection || api.connection.readyState !== WebSocket.OPEN) && attempts < 20) {
+                    await new Promise((r) => setTimeout(r, 250));
+                    api = api_base.api;
+                    attempts++;
                 }
-            } else if (data.msg_type === 'tick') {
-                const tick: TickData = data.tick;
-                if (tick?.quote !== undefined) {
-                    setPriceDecimals(tick.pip_size ?? 2);
-                    setCurrentPrice((prev) => {
-                        setPrevPrice(prev);
-                        return tick.quote;
+
+                if (api && api.connection && api.connection.readyState === WebSocket.OPEN) {
+                    setConnectionStatus('connected');
+
+                    // Request tick history and real-time subscription
+                    const response = await api.send({
+                        ticks_history: selectedMarket,
+                        adjust_start_time: 1,
+                        count: tickCount,
+                        end: 'latest',
+                        start: 1,
+                        style: 'ticks',
+                        subscribe: 1,
                     });
-                    setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), tick.quote]);
+
+                    if (isCancelled) return;
+
+                    if (response?.history?.prices) {
+                        const prices: number[] = response.history.prices;
+                        const pips: number = response.history.pip_size ?? 2;
+                        setPriceDecimals(pips);
+                        if (prices.length > 0) {
+                            setCurrentPrice(prices[prices.length - 1]);
+                            setTicksHistory(prices.slice(-tickCount));
+                        }
+                    }
+
+                    if (response?.subscription) {
+                        subscriptionId = response.subscription.id;
+                    }
+
+                    // Subscribe to incoming stream ticks
+                    const subscriber = api.onMessage().subscribe(({ data }: any) => {
+                        if (data?.msg_type === 'tick' && data?.tick?.symbol === selectedMarket) {
+                            const tick = data.tick;
+                            setPriceDecimals(tick.pip_size ?? 2);
+                            setCurrentPrice((prev) => {
+                                setPrevPrice(prev);
+                                return tick.quote;
+                            });
+                            setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), tick.quote]);
+                        }
+                    });
+
+                    return () => {
+                        subscriber.unsubscribe();
+                        if (subscriptionId) {
+                            api.send({ forget: subscriptionId }).catch(() => {});
+                        }
+                    };
+                } else {
+                    // Fallback to direct socket using Deriv's public app_id 1089 with secure endpoint
+                    const serverUrl = 'wss://ws.derivws.com/websockets/v3?app_id=1089&brand=deriv';
+                    const ws = new WebSocket(serverUrl);
+                    wsRef.current = ws;
+
+                    ws.onopen = () => {
+                        if (isCancelled) return;
+                        setConnectionStatus('connected');
+                        ws.send(JSON.stringify({
+                            ticks_history: selectedMarket,
+                            adjust_start_time: 1,
+                            count: tickCount,
+                            end: 'latest',
+                            start: 1,
+                            style: 'ticks',
+                            subscribe: 1,
+                        }));
+                    };
+
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.msg_type === 'history') {
+                            const prices: number[] = data.history?.prices || [];
+                            setPriceDecimals(data.history?.pip_size ?? 2);
+                            if (prices.length > 0) {
+                                setCurrentPrice(prices[prices.length - 1]);
+                                setTicksHistory(prices.slice(-tickCount));
+                            }
+                        } else if (data.msg_type === 'tick') {
+                            const tick = data.tick;
+                            setPriceDecimals(tick.pip_size ?? 2);
+                            setCurrentPrice((prev) => {
+                                setPrevPrice(prev);
+                                return tick.quote;
+                            });
+                            setTicksHistory((prev) => [...prev.slice(-(tickCount - 1)), tick.quote]);
+                        }
+                    };
+
+                    ws.onerror = () => setConnectionStatus('error');
                 }
+            } catch (err) {
+                console.error('Error establishing tick stream:', err);
+                setConnectionStatus('error');
             }
         };
 
-        ws.onerror = () => setConnectionStatus('error');
+        const cleanupPromise = subscribeTicks();
 
         return () => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ forget_all: 'ticks' }));
+            isCancelled = true;
+            cleanupPromise.then((cleanup) => cleanup && cleanup());
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ forget_all: 'ticks' }));
+                wsRef.current.close();
             }
-            ws.close();
         };
     }, [selectedMarket, tickCount]);
 
