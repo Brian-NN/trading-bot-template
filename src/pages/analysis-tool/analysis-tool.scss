@@ -4,12 +4,13 @@
     min-height: calc(100vh - 120px);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: #1e293b;
+    font-size: 15px; /* Boosted base font size */
 
     /* Top Header Card */
     .cat-header-card {
         background: #ffffff;
         border-radius: 12px;
-        padding: 1.25rem 1.75rem;
+        padding: 1.5rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -19,19 +20,19 @@
         .cat-title-row {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 14px;
 
             h2 {
                 margin: 0;
-                font-size: 1.4rem;
+                font-size: 1.6rem; /* Larger header */
                 font-weight: 700;
                 color: #0f172a;
             }
 
             .cat-status-dot {
-                width: 9px;
-                height: 9px;
+                width: 12px;
+                height: 12px;
                 border-radius: 50%;
                 &.connected { background: #10b981; }
                 &.connecting { background: #f59e0b; }
@@ -42,16 +43,16 @@
         .cat-inputs-row {
             display: flex;
             align-items: center;
-            gap: 1.25rem;
+            gap: 1.5rem;
             flex-wrap: wrap;
 
             .cat-field {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 6px;
 
                 label {
-                    font-size: 0.75rem;
+                    font-size: 0.85rem;
                     color: #64748b;
                     font-weight: 600;
                 }
@@ -59,9 +60,9 @@
                 .cat-select, .cat-input {
                     border: 1px solid #cbd5e1;
                     background: #f8fafc;
-                    padding: 6px 12px;
+                    padding: 8px 14px;
                     border-radius: 8px;
-                    font-size: 0.85rem;
+                    font-size: 0.95rem; /* Larger inputs */
                     font-weight: 600;
                     color: #0f172a;
                     outline: none;
@@ -72,16 +73,16 @@
             .cat-toggle-label {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                font-size: 0.85rem;
+                gap: 10px;
+                font-size: 0.95rem;
                 font-weight: 600;
                 cursor: pointer;
-                margin-top: 18px;
+                margin-top: 20px;
 
                 input {
                     accent-color: #10b981;
-                    width: 18px;
-                    height: 18px;
+                    width: 20px;
+                    height: 20px;
                     cursor: pointer;
                 }
             }
@@ -90,22 +91,22 @@
         /* Black Right Banner for Current Price */
         .cat-price-banner {
             background: #0f172a;
-            border-radius: 10px;
-            padding: 1rem 1.5rem;
-            min-width: 200px;
+            border-radius: 12px;
+            padding: 1.25rem 2rem;
+            min-width: 230px;
             text-align: center;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
             .cat-price-title {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
                 font-weight: 700;
                 letter-spacing: 0.05em;
                 color: #94a3b8;
-                margin-bottom: 4px;
+                margin-bottom: 6px;
             }
 
             .cat-price-val {
-                font-size: 1.75rem;
+                font-size: 2rem; /* Larger price text */
                 font-weight: 800;
                 font-family: monospace;
                 letter-spacing: -0.02em;
@@ -115,10 +116,10 @@
                 display: inline-block;
                 background: #1e293b;
                 color: #e2e8f0;
-                font-size: 0.75rem;
-                padding: 2px 10px;
+                font-size: 0.85rem;
+                padding: 4px 12px;
                 border-radius: 9999px;
-                margin-top: 6px;
+                margin-top: 8px;
 
                 strong {
                     color: #f43f5e;
@@ -131,7 +132,7 @@
     .cat-panel {
         background: #ffffff;
         border-radius: 12px;
-        padding: 1.25rem 1.75rem;
+        padding: 1.5rem 2rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         margin-bottom: 1.5rem;
 
@@ -139,28 +140,28 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
 
             h3 {
                 margin: 0;
-                font-size: 1.1rem;
+                font-size: 1.25rem;
                 font-weight: 700;
             }
 
             .cat-legend {
                 display: flex;
-                gap: 1rem;
-                font-size: 0.75rem;
+                gap: 1.25rem;
+                font-size: 0.85rem;
                 color: #64748b;
 
                 .legend-item {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 8px;
 
                     .dot {
-                        width: 8px;
-                        height: 8px;
+                        width: 10px;
+                        height: 10px;
                         border-radius: 50%;
                         &.dot-most { background: #10b981; }
                         &.dot-second { background: #06b6d4; }
@@ -180,7 +181,7 @@
                 position: relative;
                 border: 2px solid #e2e8f0;
                 border-radius: 12px;
-                padding: 14px 6px 10px;
+                padding: 18px 8px 14px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -199,41 +200,49 @@
                     border-color: #ef4444;
                     box-shadow: 0 0 0 1px #ef4444;
                 }
+
+                /* --- RED/PINK LATEST TICK DOT --- */
                 &.is-latest {
                     .cat-latest-marker {
                         position: absolute;
-                        top: 2px;
-                        right: 4px;
-                        color: #ec4899;
-                        font-size: 14px;
+                        top: 6px;
+                        right: 8px;
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 50%;
+                        background-color: #ec4899;
+                        box-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
+                        display: block;
+                        content: '';
                     }
                 }
 
                 .cat-ring-circle {
-                    width: 38px;
-                    height: 38px;
+                    width: 46px;
+                    height: 46px;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin-bottom: 6px;
+                    margin-bottom: 8px;
 
                     .cat-ring-digit {
-                        font-size: 1.25rem;
-                        font-weight: 700;
+                        font-size: 1.6rem; /* Large clear digit */
+                        font-weight: 800;
                         color: #0f172a;
                     }
                 }
 
                 .cat-ring-pct {
-                    font-size: 0.8rem;
+                    font-size: 0.95rem; /* Larger % text */
                     font-weight: 700;
                     color: #334155;
                 }
 
                 .cat-ring-count {
-                    font-size: 0.7rem;
+                    font-size: 0.8rem;
                     color: #94a3b8;
+                    margin-top: 2px;
                 }
             }
         }
@@ -243,7 +252,7 @@
     .cat-grid-four {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1.25rem;
+        gap: 1.5rem;
 
         @media (max-width: 1200px) {
             grid-template-columns: repeat(2, 1fr);
@@ -255,18 +264,18 @@
         .cat-sub-card {
             background: #ffffff;
             border-radius: 12px;
-            padding: 1.25rem;
+            padding: 1.5rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
             .cat-sub-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 1rem;
+                margin-bottom: 1.25rem;
 
                 h4 {
                     margin: 0;
-                    font-size: 0.95rem;
+                    font-size: 1.05rem; /* Larger sub-headings */
                     font-weight: 700;
                     color: #0f172a;
                 }
@@ -280,8 +289,8 @@
                         color: #ef4444;
                         border: 1px solid #fecaca;
                         border-radius: 6px;
-                        padding: 3px 8px;
-                        font-size: 0.7rem;
+                        padding: 4px 10px;
+                        font-size: 0.8rem;
                         font-weight: 700;
                         cursor: pointer;
                         &:hover { background: #ef4444; color: #ffffff; }
@@ -292,14 +301,15 @@
             .cat-digit-selector {
                 display: grid;
                 grid-template-columns: repeat(5, 1fr);
-                gap: 4px;
-                margin-bottom: 1.25rem;
+                gap: 6px;
+                margin-bottom: 1.5rem;
 
                 .cat-digit-btn {
                     border: 1px solid #e2e8f0;
                     background: #ffffff;
                     border-radius: 6px;
-                    padding: 6px;
+                    padding: 8px;
+                    font-size: 1rem; /* Larger button numbers */
                     font-weight: 700;
                     cursor: pointer;
                     color: #334155;
@@ -315,22 +325,22 @@
             .cat-stat-bar-group {
                 display: flex;
                 flex-direction: column;
-                gap: 6px;
+                gap: 8px;
 
                 .cat-stat-row {
                     display: flex;
                     justify-content: space-between;
-                    font-size: 0.85rem;
+                    font-size: 0.95rem; /* Clearer bar label text */
                     color: #475569;
                     font-weight: 600;
                 }
 
                 .cat-progress-track {
-                    height: 8px;
+                    height: 10px; /* Thicker progress bar */
                     background: #f1f5f9;
                     border-radius: 9999px;
                     overflow: hidden;
-                    margin-bottom: 6px;
+                    margin-bottom: 8px;
 
                     .cat-progress-fill {
                         height: 100%;
@@ -347,31 +357,31 @@
             }
 
             .cat-recent-sequence {
-                margin-top: 1rem;
-                padding-top: 0.75rem;
+                margin-top: 1.25rem;
+                padding-top: 1rem;
                 border-top: 1px solid #f1f5f9;
 
                 .cat-seq-title {
-                    font-size: 0.65rem;
+                    font-size: 0.75rem;
                     font-weight: 700;
                     color: #94a3b8;
                     display: block;
-                    margin-bottom: 6px;
+                    margin-bottom: 8px;
                 }
 
                 .cat-seq-pills {
                     display: flex;
-                    gap: 4px;
+                    gap: 6px;
                     flex-wrap: wrap;
 
                     .cat-pill {
-                        width: 24px;
-                        height: 24px;
+                        width: 28px;
+                        height: 28px;
                         border-radius: 6px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 0.75rem;
+                        font-size: 0.85rem;
                         font-weight: 800;
                         color: #ffffff;
 
