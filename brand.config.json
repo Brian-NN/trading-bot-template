@@ -73,7 +73,7 @@
         },
         "hostname": {
             "production": {
-                "com": "bot.yourbrand.com"
+                "com": "bnntradinghub.vercel.app"
             },
             "staging": {
                 "com": "staging-bot.yourbrand.com"
