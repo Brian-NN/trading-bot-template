@@ -42,48 +42,44 @@ const FreeBots: React.FC<FreeBotsProps> = ({ handleTabChange }) => {
     const { load_modal } = useStore();
 
    const handleLoadBot = async (bot: BotCard) => {
-        try {
-            const response = await fetch(bot.xmlUrl);
-            const xmlText = await response.text();
-
-            // 1. Switch to Bot Builder tab so the canvas is mounted
-            handleTabChange(DBOT_TABS.BOT_BUILDER);
-
-            setTimeout(async () => {
-                try {
-                    const blockly = (window as any).Blockly;
-                    const workspace = blockly?.derivWorkspace;
-
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-
-                    // 2. Use Deriv's official loadStrategy method
-                    if (typeof load_modal?.loadStrategy === 'function') {
-                        await load_modal.loadStrategy(xmlDoc);
-                    } else if (workspace && blockly) {
-                        // 3. Fallback: silent domToWorkspace injection
-                        blockly.Events.disable();
-                        workspace.clear();
-
-                        const xmlDom = blockly.utils.xml.textToDom(xmlText);
-                        blockly.Xml.domToWorkspace(xmlDom, workspace);
-
-                        blockly.Events.enable();
-
-                        if (typeof workspace.cleanUp === 'function') {
-                            workspace.cleanUp();
-                        }
-                    }
-                } catch (loadErr) {
-                    console.error('Workspace load error:', loadErr);
-                }
-            }, 100);
-        } catch (error) {
-            console.error('Failed to fetch bot XML:', error);
-            handleTabChange(DBOT_TABS.BOT_BUILDER);
+    try {
+        const response = await fetch(bot.xmlUrl);
+        if (!response.ok) throw new Error(`Bot file not found: ${bot.xmlUrl}`);
+        const xmlText = await response.text();
+        if (!xmlText.trim().startsWith('<xml')) {
+            throw new Error('File is not a bot XML (is the path right?)');
         }
-    };
 
+        handleTabChange(DBOT_TABS.BOT_BUILDER);
+
+        // Wait up to 5 seconds for the workspace instead of guessing 100 ms
+        const blockly = (window as any).Blockly;
+        let tries = 0;
+        while (!blockly?.derivWorkspace && tries < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            tries++;
+        }
+        const workspace = blockly?.derivWorkspace;
+        if (!workspace) throw new Error('Workspace never became ready');
+
+        if (typeof load_modal?.loadStrategy === 'function') {
+            const xmlDoc = new DOMParser().parseFromString(xmlText, 'text/xml');
+            await load_modal.loadStrategy(xmlDoc);
+        } else {
+            blockly.Events.disable();
+            try {
+                workspace.clear();
+                const xmlDom = blockly.utils.xml.textToDom(xmlText);
+                blockly.Xml.domToWorkspace(xmlDom, workspace);
+                workspace.cleanUp?.();
+            } finally {
+                blockly.Events.enable(); // always runs
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load bot:', error);
+    }
+};
     return (
         <div className="free-bots-container">
             <div className="free-bots-hero">
