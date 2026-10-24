@@ -73,11 +73,64 @@ const Footer = () => {
                 />
             )}
             {/* [/AI] */}
-            <div className="risk-disclaimer-container">
-  <p className="risk-disclaimer-text">
-    <strong>Risk Warning:</strong> Trading derivatives carries a high level of risk to your capital and you should only trade with money you can afford to lose. Trading derivatives may not be suitable for all investors. Ensure you fully understand the risks involved and seek independent advice if necessary. This platform is powered by the Deriv API but is operated independently.
-  </p>
-</div>
+           import React, { useState } from 'react';
+
+// Insert this component or place inside the main Footer component:
+export const RiskDisclaimerModal = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {/* Clickable button/icon in the footer bar */}
+      <button 
+        type="button" 
+        className="risk-disclaimer-btn" 
+        onClick={() => setIsOpen(true)}
+      >
+        <span className="risk-icon">⚠️</span>
+        <span className="risk-label">Risk Disclaimer</span>
+      </button>
+
+      {/* Pop-up modal */}
+      {isOpen && (
+        <div className="risk-modal-overlay" onClick={() => setIsOpen(false)}>
+          <div className="risk-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="risk-modal-header">
+              <h3>Risk Warning & Disclaimer</h3>
+              <button 
+                type="button" 
+                className="risk-modal-close" 
+                onClick={() => setIsOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="risk-modal-body">
+              <p>
+                Trading derivatives carries a high level of risk to your capital and you should only trade with money you can afford to lose. Trading derivatives may not be suitable for all investors.
+              </p>
+              <p>
+                Ensure you fully understand the risks involved and seek independent financial advice if necessary. Past performance of any automated strategy does not guarantee future results.
+              </p>
+              <p>
+                This platform is powered by the Deriv API but is operated independently.
+              </p>
+            </div>
+            <div className="risk-modal-footer">
+              <button 
+                type="button" 
+                className="risk-modal-confirm-btn" 
+                onClick={() => setIsOpen(false)}
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
         </footer>
     );
 };
