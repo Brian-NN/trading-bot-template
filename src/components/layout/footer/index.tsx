@@ -73,6 +73,11 @@ const Footer = () => {
                 />
             )}
             {/* [/AI] */}
+            <div className="risk-disclaimer-container">
+  <p className="risk-disclaimer-text">
+    <strong>Risk Warning:</strong> Trading derivatives carries a high level of risk to your capital and you should only trade with money you can afford to lose. Trading derivatives may not be suitable for all investors. Ensure you fully understand the risks involved and seek independent advice if necessary. This platform is powered by the Deriv API but is operated independently.
+  </p>
+</div>
         </footer>
     );
 };
