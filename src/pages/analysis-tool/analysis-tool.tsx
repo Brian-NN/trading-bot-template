@@ -2,12 +2,6 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { api_base } from '@/external/bot-skeleton';
 import './analysis-tool.scss';
 
-interface TickData {
-    quote: number;
-    pip_size: number;
-    epoch: number;
-}
-
 const MARKETS = [
     { id: 'R_10', name: 'Volatility 10 Index' },
     { id: 'R_25', name: 'Volatility 25 Index' },
@@ -31,14 +25,11 @@ const AnalysisTool: React.FC = () => {
     const [ticksHistory, setTicksHistory] = useState<number[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
-    // Selected comparison digits
-    const [selectedOverUnder, setSelectedOverUnder] = useState<number>(4);
-    const [selectedMatchDiffer, setSelectedMatchDiffer] = useState<number>(5);
+    const [selectedOverUnder, setSelectedOverUnder] = useState<number>(0);
+    const [selectedMatchDiffer, setSelectedMatchDiffer] = useState<number>(0);
 
     const wsRef = useRef<WebSocket | null>(null);
 
-    // Connect & subscribe to Deriv ticks
-   // Connect & subscribe using Deriv's existing api_base
     useEffect(() => {
         let subscriptionId: string | null = null;
         let isCancelled = false;
@@ -47,20 +38,17 @@ const AnalysisTool: React.FC = () => {
 
         const subscribeTicks = async () => {
             try {
-                // 1. Wait until api_base has an active connection
-                let api = api_base.api;
+                let api = api_base?.api;
                 let attempts = 0;
-                while ((!api || !api.connection || api.connection.readyState !== WebSocket.OPEN) && attempts < 20) {
-                    await new Promise((r) => setTimeout(r, 250));
-                    api = api_base.api;
+                while ((!api || !api.connection || api.connection.readyState !== WebSocket.OPEN) && attempts < 15) {
+                    await new Promise((r) => setTimeout(r, 200));
+                    api = api_base?.api;
                     attempts++;
                 }
 
                 if (api && api.connection && api.connection.readyState === WebSocket.OPEN) {
                     setConnectionStatus('connected');
-
-                    // Request tick history and real-time subscription
-                    const response = await api.send({
+                    const response = await (api as any).send({
                         ticks_history: selectedMarket,
                         adjust_start_time: 1,
                         count: tickCount,
@@ -86,8 +74,7 @@ const AnalysisTool: React.FC = () => {
                         subscriptionId = response.subscription.id;
                     }
 
-                    // Subscribe to incoming stream ticks
-                    const subscriber = api.onMessage().subscribe(({ data }: any) => {
+                    const subscriber = (api as any).onMessage().subscribe(({ data }: any) => {
                         if (data?.msg_type === 'tick' && data?.tick?.symbol === selectedMarket) {
                             const tick = data.tick;
                             setPriceDecimals(tick.pip_size ?? 2);
@@ -102,11 +89,10 @@ const AnalysisTool: React.FC = () => {
                     return () => {
                         subscriber.unsubscribe();
                         if (subscriptionId) {
-                            api.send({ forget: subscriptionId }).catch(() => {});
+                            (api as any).send({ forget: subscriptionId }).catch(() => {});
                         }
                     };
                 } else {
-                    // Fallback to direct socket using Deriv's public app_id 1089 with secure endpoint
                     const serverUrl = 'wss://ws.derivws.com/websockets/v3?app_id=1089&brand=deriv';
                     const ws = new WebSocket(serverUrl);
                     wsRef.current = ws;
@@ -148,7 +134,7 @@ const AnalysisTool: React.FC = () => {
                     ws.onerror = () => setConnectionStatus('error');
                 }
             } catch (err) {
-                console.error('Error establishing tick stream:', err);
+                console.error('Error in ticks stream:', err);
                 setConnectionStatus('error');
             }
         };
@@ -165,7 +151,6 @@ const AnalysisTool: React.FC = () => {
         };
     }, [selectedMarket, tickCount]);
 
-    // Extract last digits
     const lastDigits = useMemo(() => {
         return ticksHistory.map((price) => {
             const formatted = price.toFixed(priceDecimals);
@@ -175,7 +160,6 @@ const AnalysisTool: React.FC = () => {
 
     const latestDigit = lastDigits.length > 0 ? lastDigits[lastDigits.length - 1] : null;
 
-    // Digit frequencies (0 - 9)
     const digitStats = useMemo(() => {
         const counts = Array(10).fill(0);
         lastDigits.forEach((d) => counts[d]++);
@@ -190,24 +174,49 @@ const AnalysisTool: React.FC = () => {
 
         const sorted = [...indexed].sort((a, b) => b.count - a.count);
         const most = sorted[0]?.digit;
-        const second = sorted[1]?.digit;
+        const secondMost = sorted[1]?.digit;
         const least = sorted[sorted.length - 1]?.digit;
+        const secondLeast = sorted[sorted.length - 2]?.digit;
 
-        return { indexed, most, second, least };
+        return { indexed, most, secondMost, least, secondLeast };
     }, [lastDigits]);
 
-    // Even / Odd stats
+    const overUnderStats = useMemo(() => {
+        if (!lastDigits.length) return { over: '0.0', under: '0.0', recent: [] };
+        const overCount = lastDigits.filter((d) => d > selectedOverUnder).length;
+        const underCount = lastDigits.filter((d) => d < selectedOverUnder).length;
+        const total = lastDigits.length;
+
+        const recent = lastDigits.slice(-8).map((d) => (d > selectedOverUnder ? 'O' : d < selectedOverUnder ? 'U' : '-'));
+
+        return {
+            over: ((overCount / total) * 100).toFixed(1),
+            under: ((underCount / total) * 100).toFixed(1),
+            recent,
+        };
+    }, [lastDigits, selectedOverUnder]);
+
+    const matchDifferStats = useMemo(() => {
+        if (!lastDigits.length) return { match: '0.0', differ: '0.0', recent: [] };
+        const matchCount = lastDigits.filter((d) => d === selectedMatchDiffer).length;
+        const total = lastDigits.length;
+        const matchPct = ((matchCount / total) * 100).toFixed(1);
+        const differPct = (100 - parseFloat(matchPct)).toFixed(1);
+        const recent = lastDigits.slice(-8).map((d) => (d === selectedMatchDiffer ? 'M' : 'D'));
+
+        return { match: matchPct, differ: differPct, recent };
+    }, [lastDigits, selectedMatchDiffer]);
+
     const evenOddStats = useMemo(() => {
         if (!lastDigits.length) return { evenPct: '50.0', oddPct: '50.0', recent: [] };
         const evenCount = lastDigits.filter((d) => d % 2 === 0).length;
         const total = lastDigits.length;
         const evenPct = ((evenCount / total) * 100).toFixed(1);
         const oddPct = (100 - parseFloat(evenPct)).toFixed(1);
-        const recent = lastDigits.slice(-10).map((d) => (d % 2 === 0 ? 'E' : 'O'));
+        const recent = lastDigits.slice(-8).map((d) => (d % 2 === 0 ? 'E' : 'O'));
         return { evenPct, oddPct, recent };
     }, [lastDigits]);
 
-    // Rise / Fall stats
     const riseFallStats = useMemo(() => {
         if (ticksHistory.length < 2) return { risePct: '50.0', fallPct: '50.0', recent: [] };
         let rises = 0;
@@ -219,7 +228,7 @@ const AnalysisTool: React.FC = () => {
             if (diff >= 0) rises++;
             else falls++;
         }
-        for (let i = Math.max(1, ticksHistory.length - 10); i < ticksHistory.length; i++) {
+        for (let i = Math.max(1, ticksHistory.length - 8); i < ticksHistory.length; i++) {
             recent.push(ticksHistory[i] >= ticksHistory[i - 1] ? 'R' : 'F');
         }
 
@@ -229,247 +238,161 @@ const AnalysisTool: React.FC = () => {
         return { risePct, fallPct, recent };
     }, [ticksHistory]);
 
-    // Over / Under calculated for selectedOverUnder
-    const overUnderStats = useMemo(() => {
-        if (!lastDigits.length) return { over: '50.0', under: '50.0' };
-        const overCount = lastDigits.filter((d) => d > selectedOverUnder).length;
-        const underCount = lastDigits.filter((d) => d < selectedOverUnder).length;
-        const total = lastDigits.length;
-        return {
-            over: ((overCount / total) * 100).toFixed(1),
-            under: ((underCount / total) * 100).toFixed(1),
-        };
-    }, [lastDigits, selectedOverUnder]);
-
-    // Matches / Differs calculated for selectedMatchDiffer
-    const matchDifferStats = useMemo(() => {
-        if (!lastDigits.length) return { match: '10.0', differ: '90.0' };
-        const matchCount = lastDigits.filter((d) => d === selectedMatchDiffer).length;
-        const total = lastDigits.length;
-        const matchPct = ((matchCount / total) * 100).toFixed(1);
-        const differPct = (100 - parseFloat(matchPct)).toFixed(1);
-        return { match: matchPct, differ: differPct };
-    }, [lastDigits, selectedMatchDiffer]);
-
     const priceColor =
         prevPrice !== null && currentPrice !== null
             ? currentPrice >= prevPrice
                 ? '#10b981'
                 : '#ef4444'
-            : '#ffffff';
+            : '#0f172a';
 
     return (
         <div className="chichi-analysis-tool">
-            {/* Top Bar: Controls & Current Price */}
-            <div className="cat-header-card">
-                <div className="cat-controls-group">
-                    <div className="cat-title-row">
+            {/* Top Controls Card */}
+            <div className="cat-top-card">
+                <div className="cat-header-row">
+                    <div className="cat-title-wrap">
                         <h2>Analysis Tool</h2>
                         <span className={`cat-status-dot ${connectionStatus}`} />
                     </div>
-
-                    <div className="cat-inputs-row">
-                        <div className="cat-field">
-                            <label>Market</label>
-                            <select
-                                value={selectedMarket}
-                                onChange={(e) => setSelectedMarket(e.target.value)}
-                                className="cat-select"
-                            >
-                                {MARKETS.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="cat-field">
-                            <label>Ticks</label>
-                            <input
-                                type="number"
-                                min={50}
-                                max={5000}
-                                step={50}
-                                value={tickCount}
-                                onChange={(e) => setTickCount(Number(e.target.value))}
-                                className="cat-input"
-                            />
-                        </div>
-
-                        <label className="cat-toggle-label">
-                            <input
-                                type="checkbox"
-                                checked={syncWithBot}
-                                onChange={(e) => setSyncWithBot(e.target.checked)}
-                            />
-                            <span className="cat-toggle-slider" />
-                            <span className="cat-toggle-text">Sync to Bot Builder</span>
-                        </label>
+                    <div className="cat-desktop-price">
+                        <span className="price-label">PRICE:</span>
+                        <span className="price-val" style={{ color: priceColor }}>
+                            {currentPrice !== null ? currentPrice.toFixed(priceDecimals) : 'Connecting...'}
+                        </span>
                     </div>
                 </div>
 
-                <div className="cat-price-banner">
-                    <div className="cat-price-title">CURRENT PRICE</div>
-                    <div className="cat-price-val" style={{ color: priceColor }}>
-                        {currentPrice !== null ? currentPrice.toFixed(priceDecimals) : 'Connecting...'}
+                <div className="cat-controls-flex">
+                    <div className="cat-field">
+                        <label>Market</label>
+                        <select
+                            value={selectedMarket}
+                            onChange={(e) => setSelectedMarket(e.target.value)}
+                            className="cat-select"
+                        >
+                            {MARKETS.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                    {m.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    {latestDigit !== null && (
-                        <div className="cat-latest-digit-pill">
-                            Latest digit: <strong>{latestDigit}</strong>
-                        </div>
-                    )}
+
+                    <div className="cat-field">
+                        <label>Ticks</label>
+                        <input
+                            type="number"
+                            min={50}
+                            max={5000}
+                            step={50}
+                            value={tickCount}
+                            onChange={(e) => setTickCount(Number(e.target.value))}
+                            className="cat-input"
+                        />
+                    </div>
+
+                    <label className="cat-toggle-label">
+                        <input
+                            type="checkbox"
+                            checked={syncWithBot}
+                            onChange={(e) => setSyncWithBot(e.target.checked)}
+                        />
+                        <span>Sync to Bot Builder</span>
+                    </label>
                 </div>
             </div>
 
-            {/* Digit Frequency Ring Section */}
+            {/* Digit Frequency Card (Matching chichitraders 2x5 Grid) */}
             <div className="cat-panel">
                 <div className="cat-panel-header">
                     <h3>Digit Frequency</h3>
-                    <div className="cat-legend">
-                        <span className="legend-item"><span className="dot dot-most" /> Most appearing</span>
-                        <span className="legend-item"><span className="dot dot-second" /> Second most</span>
-                        <span className="legend-item"><span className="dot dot-least" /> Least appearing</span>
-                        <span className="legend-item"><span className="dot dot-latest" /> Latest tick</span>
-                    </div>
+                    {latestDigit !== null && (
+                        <div className="cat-latest-pill">
+                            Latest digit {latestDigit}
+                        </div>
+                    )}
                 </div>
 
-                <div className="cat-digit-rings-grid">
+                <div className="cat-legend">
+                    <span className="legend-item"><span className="dot dot-most" /> Most appearing</span>
+                    <span className="legend-item"><span className="dot dot-second" /> Second most</span>
+                    <span className="legend-item"><span className="dot dot-second-least" /> Second least</span>
+                    <span className="legend-item"><span className="dot dot-least" /> Least appearing</span>
+                    <span className="legend-item"><span className="arrow-latest">▲</span> Latest tick</span>
+                </div>
+
+                {/* 2x5 Responsive Grid */}
+                <div className="cat-digit-grid-2x5">
                     {digitStats.indexed.map((item) => {
                         const isMost = item.digit === digitStats.most;
-                        const isSecond = item.digit === digitStats.second;
+                        const isSecondMost = item.digit === digitStats.secondMost;
+                        const isSecondLeast = item.digit === digitStats.secondLeast;
                         const isLeast = item.digit === digitStats.least;
                         const isLatest = item.digit === latestDigit;
 
-                        let ringClass = '';
-                        if (isMost) ringClass = 'ring-most';
-                        else if (isSecond) ringClass = 'ring-second';
-                        else if (isLeast) ringClass = 'ring-least';
+                        let gaugeClass = '';
+                        if (isMost) gaugeClass = 'gauge-most';
+                        else if (isSecondMost) gaugeClass = 'gauge-second';
+                        else if (isSecondLeast) gaugeClass = 'gauge-second-least';
+                        else if (isLeast) gaugeClass = 'gauge-least';
 
                         return (
-                            <div key={item.digit} className={`cat-ring-card ${ringClass} ${isLatest ? 'is-latest' : ''}`}>
-                                {isLatest && <span className="cat-latest-marker" />}
-                                <div className="cat-ring-circle">
-                                    <span className="cat-ring-digit">{item.digit}</span>
+                            <div key={item.digit} className={`cat-gauge-item ${isLatest ? 'is-latest-tick' : ''}`}>
+                                <div className={`cat-donut-gauge ${gaugeClass}`}>
+                                    <span className="cat-gauge-number">{item.digit}</span>
                                 </div>
-                                <div className="cat-ring-pct">{item.percentage}%</div>
-                                <div className="cat-ring-count">{item.count}</div>
+                                <div className="cat-gauge-pct">{item.percentage}%</div>
+                                {isLatest && <div className="cat-latest-arrow">▲</div>}
                             </div>
                         );
                     })}
                 </div>
             </div>
 
-            {/* Bottom 4-Column Grid: Over/Under, Matches/Differs, Even/Odd, Rise/Fall */}
-            <div className="cat-grid-four">
-                {/* 1. Over / Under */}
+            {/* Bottom Analysis Cards */}
+            <div className="cat-bottom-cards">
+                {/* 1. Over/Under */}
                 <div className="cat-sub-card">
-                    <div className="cat-sub-header">
+                    <div className="cat-sub-top">
                         <h4>Over/Under Analysis</h4>
-                        <div className="cat-action-btns">
-                            <button type="button" className="cat-btn-red">To Under</button>
-                            <button type="button" className="cat-btn-red">To Over</button>
+                        <div className="cat-actions">
+                            <button type="button" className="cat-pin-btn">📌</button>
+                            <button type="button" className="cat-action-pill red">2x Over</button>
                         </div>
                     </div>
-                    <div className="cat-digit-selector">
+
+                    <div className="cat-keypad-5x2">
                         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
                             <button
                                 key={d}
                                 type="button"
-                                className={`cat-digit-btn ${selectedOverUnder === d ? 'active' : ''}`}
+                                className={`cat-key-btn ${selectedOverUnder === d ? 'active' : ''}`}
                                 onClick={() => setSelectedOverUnder(d)}
                             >
                                 {d}
                             </button>
                         ))}
                     </div>
-                    <div className="cat-stat-bar-group">
-                        <div className="cat-stat-row">
+
+                    <div className="cat-stat-lines">
+                        <div className="cat-stat-head">
                             <span>Over</span>
                             <strong>{overUnderStats.over}%</strong>
                         </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-blue" style={{ width: `${overUnderStats.over}%` }} />
-                        </div>
-                        <div className="cat-stat-row">
+                        <div className="cat-bar"><div className="cat-fill green" style={{ width: `${overUnderStats.over}%` }} /></div>
+
+                        <div className="cat-stat-head">
                             <span>Under</span>
                             <strong>{overUnderStats.under}%</strong>
                         </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-orange" style={{ width: `${overUnderStats.under}%` }} />
-                        </div>
+                        <div className="cat-bar"><div className="cat-fill orange" style={{ width: `${overUnderStats.under}%` }} /></div>
                     </div>
-                </div>
 
-                {/* 2. Matches / Differs */}
-                <div className="cat-sub-card">
-                    <div className="cat-sub-header">
-                        <h4>Matches/Differs Analysis</h4>
-                        <div className="cat-action-btns">
-                            <button type="button" className="cat-btn-red">To Match</button>
-                            <button type="button" className="cat-btn-red">To Differ</button>
-                        </div>
-                    </div>
-                    <div className="cat-digit-selector">
-                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-                            <button
-                                key={d}
-                                type="button"
-                                className={`cat-digit-btn ${selectedMatchDiffer === d ? 'active' : ''}`}
-                                onClick={() => setSelectedMatchDiffer(d)}
-                            >
-                                {d}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="cat-stat-bar-group">
-                        <div className="cat-stat-row">
-                            <span>Matches</span>
-                            <strong>{matchDifferStats.match}%</strong>
-                        </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-blue" style={{ width: `${matchDifferStats.match}%` }} />
-                        </div>
-                        <div className="cat-stat-row">
-                            <span>Differs</span>
-                            <strong>{matchDifferStats.differ}%</strong>
-                        </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-purple" style={{ width: `${matchDifferStats.differ}%` }} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Even / Odd */}
-                <div className="cat-sub-card">
-                    <div className="cat-sub-header">
-                        <h4>Even/Odd Analysis</h4>
-                        <div className="cat-action-btns">
-                            <button type="button" className="cat-btn-red">To Even</button>
-                            <button type="button" className="cat-btn-red">To Odd</button>
-                        </div>
-                    </div>
-                    <div className="cat-stat-bar-group">
-                        <div className="cat-stat-row">
-                            <span>Even</span>
-                            <strong>{evenOddStats.evenPct}%</strong>
-                        </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-green" style={{ width: `${evenOddStats.evenPct}%` }} />
-                        </div>
-                        <div className="cat-stat-row">
-                            <span>Odd</span>
-                            <strong>{evenOddStats.oddPct}%</strong>
-                        </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-orange" style={{ width: `${evenOddStats.oddPct}%` }} />
-                        </div>
-                    </div>
-                    <div className="cat-recent-sequence">
-                        <span className="cat-seq-title">RECENT SEQUENCE</span>
-                        <div className="cat-seq-pills">
-                            {evenOddStats.recent.map((val, idx) => (
-                                <span key={idx} className={`cat-pill ${val === 'E' ? 'pill-even' : 'pill-odd'}`}>
+                    <div className="cat-seq-section">
+                        <span className="cat-seq-lbl">RECENT SEQUENCE</span>
+                        <div className="cat-seq-tiles">
+                            {overUnderStats.recent.map((val, idx) => (
+                                <span key={idx} className={`cat-tile ${val === 'O' ? 'tile-green' : 'tile-gray'}`}>
                                     {val}
                                 </span>
                             ))}
@@ -477,36 +400,120 @@ const AnalysisTool: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 4. Rise / Fall */}
+                {/* 2. Matches/Differs */}
                 <div className="cat-sub-card">
-                    <div className="cat-sub-header">
-                        <h4>Rise/Fall Analysis</h4>
-                        <div className="cat-action-btns">
-                            <button type="button" className="cat-btn-red">To Fall</button>
-                            <button type="button" className="cat-btn-red">To Rise</button>
+                    <div className="cat-sub-top">
+                        <h4>Matches/Differs Analysis</h4>
+                        <div className="cat-actions">
+                            <button type="button" className="cat-pin-btn">📌</button>
+                            <button type="button" className="cat-action-pill red">1x Match</button>
                         </div>
                     </div>
-                    <div className="cat-stat-bar-group">
-                        <div className="cat-stat-row">
+
+                    <div className="cat-keypad-5x2">
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+                            <button
+                                key={d}
+                                type="button"
+                                className={`cat-key-btn ${selectedMatchDiffer === d ? 'active' : ''}`}
+                                onClick={() => setSelectedMatchDiffer(d)}
+                            >
+                                {d}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="cat-stat-lines">
+                        <div className="cat-stat-head">
+                            <span>Matches</span>
+                            <strong>{matchDifferStats.match}%</strong>
+                        </div>
+                        <div className="cat-bar"><div className="cat-fill blue" style={{ width: `${matchDifferStats.match}%` }} /></div>
+
+                        <div className="cat-stat-head">
+                            <span>Differs</span>
+                            <strong>{matchDifferStats.differ}%</strong>
+                        </div>
+                        <div className="cat-bar"><div className="cat-fill purple" style={{ width: `${matchDifferStats.differ}%` }} /></div>
+                    </div>
+
+                    <div className="cat-seq-section">
+                        <span className="cat-seq-lbl">RECENT SEQUENCE</span>
+                        <div className="cat-seq-tiles">
+                            {matchDifferStats.recent.map((val, idx) => (
+                                <span key={idx} className={`cat-tile ${val === 'M' ? 'tile-blue' : 'tile-purple'}`}>
+                                    {val}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Even/Odd */}
+                <div className="cat-sub-card">
+                    <div className="cat-sub-top">
+                        <h4>Even/Odd Analysis</h4>
+                        <div className="cat-actions">
+                            <button type="button" className="cat-pin-btn">📌</button>
+                            <button type="button" className="cat-action-pill red">1x Even</button>
+                        </div>
+                    </div>
+
+                    <div className="cat-stat-lines" style={{ marginTop: '1rem' }}>
+                        <div className="cat-stat-head">
+                            <span>Even</span>
+                            <strong>{evenOddStats.evenPct}%</strong>
+                        </div>
+                        <div className="cat-bar"><div className="cat-fill green" style={{ width: `${evenOddStats.evenPct}%` }} /></div>
+
+                        <div className="cat-stat-head">
+                            <span>Odd</span>
+                            <strong>{evenOddStats.oddPct}%</strong>
+                        </div>
+                        <div className="cat-bar"><div className="cat-fill orange" style={{ width: `${evenOddStats.oddPct}%` }} /></div>
+                    </div>
+
+                    <div className="cat-seq-section">
+                        <span className="cat-seq-lbl">RECENT SEQUENCE</span>
+                        <div className="cat-seq-tiles">
+                            {evenOddStats.recent.map((val, idx) => (
+                                <span key={idx} className={`cat-tile ${val === 'E' ? 'tile-green' : 'tile-orange'}`}>
+                                    {val}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Rise/Fall */}
+                <div className="cat-sub-card">
+                    <div className="cat-sub-top">
+                        <h4>Rise/Fall Analysis</h4>
+                        <div className="cat-actions">
+                            <button type="button" className="cat-pin-btn">📌</button>
+                            <button type="button" className="cat-action-pill red">1x Rise</button>
+                        </div>
+                    </div>
+
+                    <div className="cat-stat-lines" style={{ marginTop: '1rem' }}>
+                        <div className="cat-stat-head">
                             <span>Rise</span>
                             <strong>{riseFallStats.risePct}%</strong>
                         </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-blue" style={{ width: `${riseFallStats.risePct}%` }} />
-                        </div>
-                        <div className="cat-stat-row">
+                        <div className="cat-bar"><div className="cat-fill green" style={{ width: `${riseFallStats.risePct}%` }} /></div>
+
+                        <div className="cat-stat-head">
                             <span>Fall</span>
                             <strong>{riseFallStats.fallPct}%</strong>
                         </div>
-                        <div className="cat-progress-track">
-                            <div className="cat-progress-fill fill-red" style={{ width: `${riseFallStats.fallPct}%` }} />
-                        </div>
+                        <div className="cat-bar"><div className="cat-fill red" style={{ width: `${riseFallStats.fallPct}%` }} /></div>
                     </div>
-                    <div className="cat-recent-sequence">
-                        <span className="cat-seq-title">RECENT SEQUENCE</span>
-                        <div className="cat-seq-pills">
+
+                    <div className="cat-seq-section">
+                        <span className="cat-seq-lbl">RECENT SEQUENCE</span>
+                        <div className="cat-seq-tiles">
                             {riseFallStats.recent.map((val, idx) => (
-                                <span key={idx} className={`cat-pill ${val === 'R' ? 'pill-rise' : 'pill-fall'}`}>
+                                <span key={idx} className={`cat-tile ${val === 'R' ? 'tile-green' : 'tile-red'}`}>
                                     {val}
                                 </span>
                             ))}
