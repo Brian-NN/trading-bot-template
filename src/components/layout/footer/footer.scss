@@ -111,3 +111,21 @@
         opacity: 0.2;
     }
 }
+.risk-disclaimer-container {
+  padding: 12px 24px;
+  background-color: var(--brand-black, #0f172a);
+  border-top: 1px solid var(--brand-grey-800, #1e293b);
+  text-align: center;
+}
+
+.risk-disclaimer-text {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--brand-grey-400, #94a3b8);
+  margin: 0 auto;
+  max-width: 1100px;
+}
+
+.risk-disclaimer-text strong {
+  color: var(--brand-warning, #f59e0b);
+}
