@@ -14,32 +14,24 @@ interface BotCard {
 
 const BOTS_LIST: BotCard[] = [
     {
-        id: 'nexus-speedbot',
-        title: 'Nexus Speedbot V5',
-        badge: 'TICK VOLATILITY',
-        badgeColor: '#8b5cf6',
-        buttonColor: '#8b5cf6',
-        imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60',
-        xmlUrl: '/bots/nexus_speedbot.xml',
+        id: 'bot-1',
+        title: 'EVEN ODD KING',
+        badge: 'EVEN ODD',
+        badgeColor: '#0096FF',
+        buttonColor: '#0096FF6',
+        imageUrl: '/bots/evenodd.jpg',
+        xmlUrl: '/bots/EO_AI.xml',
     },
     {
-        id: 'zeus-print',
-        title: 'Zeus Print',
-        badge: 'EVEN / ODD',
-        badgeColor: '#f97316',
-        buttonColor: '#3b82f6',
-        imageUrl: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=500&auto=format&fit=crop&q=60',
-        xmlUrl: '/bots/zeus_print.xml',
+        id: 'bot-2',
+        title: 'Differs Master',
+        badge: 'Differs',
+        badgeColor: '#0096FF',
+        buttonColor: '#0096FF',
+        imageUrl: '/bots/evenodd.jpg',
+        xmlUrl: '/bots/Differs.xml',
     },
-    {
-        id: 'even-odd-analyzer',
-        title: 'Even Odd Percentage Analyser',
-        badge: 'DIGIT DIFFERS',
-        badgeColor: '#10b981',
-        buttonColor: '#10b981',
-        imageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=500&auto=format&fit=crop&q=60',
-        xmlUrl: '/bots/even_odd.xml',
-    },
+   
 ];
 
 interface FreeBotsProps {
