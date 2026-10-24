@@ -1,415 +1,407 @@
 .chichi-analysis-tool {
-    padding: 1.5rem 2rem;
-    background: #f8fafc;
-    min-height: calc(100vh - 120px);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 1rem 1.5rem 5rem;
+    background: #f4f6f8;
     color: #1e293b;
-    font-size: 15px; /* Boosted base font size */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-sizing: border-box;
 
-    /* Top Header Card */
-    .cat-header-card {
+    /* Top Card */
+    .cat-top-card {
         background: #ffffff;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        margin-bottom: 1.25rem;
 
-        .cat-title-row {
+        .cat-header-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
+            margin-bottom: 1rem;
 
-            h2 {
-                margin: 0;
-                font-size: 1.6rem; /* Larger header */
-                font-weight: 700;
-                color: #0f172a;
+            .cat-title-wrap {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                h2 {
+                    margin: 0;
+                    font-size: 1.35rem;
+                    font-weight: 800;
+                    color: #0f172a;
+                }
+
+                .cat-status-dot {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    &.connected { background: #10b981; }
+                    &.connecting { background: #f59e0b; }
+                    &.error { background: #ef4444; }
+                }
             }
 
-            .cat-status-dot {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                &.connected { background: #10b981; }
-                &.connecting { background: #f59e0b; }
-                &.error { background: #ef4444; }
+            .cat-desktop-price {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-family: monospace;
+
+                .price-label {
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    font-weight: 700;
+                }
+                .price-val {
+                    font-size: 1.25rem;
+                    font-weight: 800;
+                }
             }
         }
 
-        .cat-inputs-row {
+        .cat-controls-flex {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1.25rem;
             flex-wrap: wrap;
 
             .cat-field {
                 display: flex;
                 flex-direction: column;
-                gap: 6px;
+                gap: 4px;
 
                 label {
-                    font-size: 0.85rem;
+                    font-size: 0.75rem;
+                    font-weight: 700;
                     color: #64748b;
-                    font-weight: 600;
                 }
 
                 .cat-select, .cat-input {
-                    border: 1px solid #cbd5e1;
-                    background: #f8fafc;
-                    padding: 8px 14px;
-                    border-radius: 8px;
-                    font-size: 0.95rem; /* Larger inputs */
-                    font-weight: 600;
+                    background: #ffffff;
+                    border: 1.5px solid #dbeafe;
+                    border-radius: 10px;
+                    padding: 8px 12px;
+                    font-size: 0.9rem;
+                    font-weight: 700;
                     color: #0f172a;
                     outline: none;
-                    &:focus { border-color: #3b82f6; }
+                    &:focus { border-color: #2563eb; }
                 }
             }
 
             .cat-toggle-label {
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                font-size: 0.95rem;
-                font-weight: 600;
+                gap: 8px;
+                font-size: 0.85rem;
+                font-weight: 700;
                 cursor: pointer;
-                margin-top: 20px;
+                margin-top: 18px;
 
                 input {
                     accent-color: #10b981;
-                    width: 20px;
-                    height: 20px;
-                    cursor: pointer;
-                }
-            }
-        }
-
-        /* Black Right Banner for Current Price */
-        .cat-price-banner {
-            background: #0f172a;
-            border-radius: 12px;
-            padding: 1.25rem 2rem;
-            min-width: 230px;
-            text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-
-            .cat-price-title {
-                font-size: 0.8rem;
-                font-weight: 700;
-                letter-spacing: 0.05em;
-                color: #94a3b8;
-                margin-bottom: 6px;
-            }
-
-            .cat-price-val {
-                font-size: 2rem; /* Larger price text */
-                font-weight: 800;
-                font-family: monospace;
-                letter-spacing: -0.02em;
-            }
-
-            .cat-latest-digit-pill {
-                display: inline-block;
-                background: #1e293b;
-                color: #e2e8f0;
-                font-size: 0.85rem;
-                padding: 4px 12px;
-                border-radius: 9999px;
-                margin-top: 8px;
-
-                strong {
-                    color: #f43f5e;
+                    width: 18px;
+                    height: 18px;
                 }
             }
         }
     }
 
-    /* Digit Frequency Section */
+    /* Digit Frequency Card */
     .cat-panel {
         background: #ffffff;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        margin-bottom: 1.25rem;
 
         .cat-panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.75rem;
 
             h3 {
                 margin: 0;
                 font-size: 1.25rem;
-                font-weight: 700;
+                font-weight: 800;
+                color: #0f172a;
             }
 
-            .cat-legend {
-                display: flex;
-                gap: 1.25rem;
+            .cat-latest-pill {
+                background: #eff6ff;
+                color: #2563eb;
                 font-size: 0.85rem;
-                color: #64748b;
+                font-weight: 700;
+                padding: 4px 14px;
+                border-radius: 9999px;
+            }
+        }
 
-                .legend-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+        .cat-legend {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
 
-                    .dot {
-                        width: 10px;
-                        height: 10px;
-                        border-radius: 50%;
-                        &.dot-most { background: #10b981; }
-                        &.dot-second { background: #06b6d4; }
-                        &.dot-least { background: #ef4444; }
-                        &.dot-latest { background: #ec4899; }
-                    }
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+
+                .dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    &.dot-most { background: #10b981; }
+                    &.dot-second { background: #6366f1; }
+                    &.dot-second-least { background: #f59e0b; }
+                    &.dot-least { background: #ef4444; }
+                }
+                .arrow-latest {
+                    color: #ef4444;
+                    font-size: 10px;
                 }
             }
         }
 
-        .cat-digit-rings-grid {
+        /* 2 Rows x 5 Columns */
+        .cat-digit-grid-2x5 {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, auto);
+            gap: 1rem 0.5rem;
+            justify-items: center;
 
-            .cat-ring-card {
-                position: relative;
-                border: 2px solid #e2e8f0;
-                border-radius: 12px;
-                padding: 18px 8px 14px;
+            .cat-gauge-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                background: #ffffff;
-                transition: transform 0.15s ease;
+                position: relative;
+                width: 100%;
 
-                &.ring-most {
-                    border-color: #10b981;
-                    box-shadow: 0 0 0 1px #10b981;
-                }
-                &.ring-second {
-                    border-color: #06b6d4;
-                    box-shadow: 0 0 0 1px #06b6d4;
-                }
-                &.ring-least {
-                    border-color: #ef4444;
-                    box-shadow: 0 0 0 1px #ef4444;
-                }
-
-                /* --- RED/PINK LATEST TICK DOT --- */
-                &.is-latest {
-                    .cat-latest-marker {
-                        position: absolute;
-                        top: 6px;
-                        right: 8px;
-                        width: 12px;
-                        height: 12px;
-                        border-radius: 50%;
-                        background-color: #ec4899;
-                        box-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
-                        display: block;
-                        content: '';
-                    }
-                }
-
-                .cat-ring-circle {
-                    width: 46px;
-                    height: 46px;
+                .cat-donut-gauge {
+                    width: 52px;
+                    height: 52px;
                     border-radius: 50%;
+                    background: #f1f5f9;
+                    border: 4px solid #e2e8f0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin-bottom: 8px;
+                    position: relative;
+                    transition: all 0.2s;
 
-                    .cat-ring-digit {
-                        font-size: 1.6rem; /* Large clear digit */
+                    .cat-gauge-number {
+                        font-size: 1.15rem;
                         font-weight: 800;
                         color: #0f172a;
                     }
+
+                    /* Colored Rings matching chichitraders */
+                    &.gauge-most {
+                        border-top-color: #10b981;
+                        border-right-color: #10b981;
+                    }
+                    &.gauge-second {
+                        border-top-color: #6366f1;
+                        border-right-color: #6366f1;
+                    }
+                    &.gauge-second-least {
+                        border-top-color: #f59e0b;
+                    }
+                    &.gauge-least {
+                        border-top-color: #ef4444;
+                        border-right-color: #ef4444;
+                    }
                 }
 
-                .cat-ring-pct {
-                    font-size: 0.95rem; /* Larger % text */
+                &.is-latest-tick {
+                    .cat-donut-gauge {
+                        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+                    }
+                }
+
+                .cat-gauge-pct {
+                    font-size: 0.8rem;
                     font-weight: 700;
                     color: #334155;
+                    margin-top: 6px;
                 }
 
-                .cat-ring-count {
-                    font-size: 0.8rem;
-                    color: #94a3b8;
-                    margin-top: 2px;
+                .cat-latest-arrow {
+                    color: #ef4444;
+                    font-size: 10px;
+                    margin-top: 1px;
                 }
             }
         }
     }
 
-    /* Bottom 4 Columns */
-    .cat-grid-four {
+    /* Bottom 4 Cards Grid */
+    .cat-bottom-cards {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
-
-        @media (max-width: 1200px) {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        @media (max-width: 650px) {
-            grid-template-columns: 1fr;
-        }
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
 
         .cat-sub-card {
             background: #ffffff;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
-            .cat-sub-header {
+            .cat-sub-top {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 1.25rem;
+                margin-bottom: 1rem;
 
                 h4 {
                     margin: 0;
-                    font-size: 1.05rem; /* Larger sub-headings */
-                    font-weight: 700;
+                    font-size: 1.05rem;
+                    font-weight: 800;
                     color: #0f172a;
                 }
 
-                .cat-action-btns {
+                .cat-actions {
                     display: flex;
+                    align-items: center;
                     gap: 6px;
 
-                    .cat-btn-red {
-                        background: #fee2e2;
-                        color: #ef4444;
-                        border: 1px solid #fecaca;
-                        border-radius: 6px;
-                        padding: 4px 10px;
-                        font-size: 0.8rem;
-                        font-weight: 700;
+                    .cat-pin-btn {
+                        border: 1.5px solid #2563eb;
+                        background: #ffffff;
+                        color: #2563eb;
+                        border-radius: 8px;
+                        padding: 4px 8px;
                         cursor: pointer;
-                        &:hover { background: #ef4444; color: #ffffff; }
+                        font-size: 0.85rem;
+                    }
+
+                    .cat-action-pill {
+                        border: none;
+                        border-radius: 8px;
+                        padding: 6px 14px;
+                        font-size: 0.85rem;
+                        font-weight: 700;
+                        color: #ffffff;
+                        cursor: pointer;
+
+                        &.red { background: #ef4444; }
                     }
                 }
             }
 
-            .cat-digit-selector {
+            /* Keypad 5 Columns x 2 Rows */
+            .cat-keypad-5x2 {
                 display: grid;
                 grid-template-columns: repeat(5, 1fr);
                 gap: 6px;
-                margin-bottom: 1.5rem;
+                margin-bottom: 1.25rem;
 
-                .cat-digit-btn {
-                    border: 1px solid #e2e8f0;
+                .cat-key-btn {
                     background: #ffffff;
-                    border-radius: 6px;
-                    padding: 8px;
-                    font-size: 1rem; /* Larger button numbers */
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 10px 0;
+                    font-size: 0.95rem;
                     font-weight: 700;
-                    cursor: pointer;
                     color: #334155;
+                    cursor: pointer;
+                    transition: all 0.15s;
 
                     &.active {
-                        background: #3b82f6;
+                        background: #2563eb;
+                        border-color: #2563eb;
                         color: #ffffff;
-                        border-color: #3b82f6;
                     }
                 }
             }
 
-            .cat-stat-bar-group {
+            .cat-stat-lines {
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
+                gap: 4px;
 
-                .cat-stat-row {
+                .cat-stat-head {
                     display: flex;
                     justify-content: space-between;
-                    font-size: 0.95rem; /* Clearer bar label text */
-                    color: #475569;
-                    font-weight: 600;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    color: #334155;
+                    margin-top: 4px;
                 }
 
-                .cat-progress-track {
-                    height: 10px; /* Thicker progress bar */
+                .cat-bar {
+                    height: 6px;
                     background: #f1f5f9;
                     border-radius: 9999px;
                     overflow: hidden;
-                    margin-bottom: 8px;
 
-                    .cat-progress-fill {
+                    .cat-fill {
                         height: 100%;
                         border-radius: 9999px;
-                        transition: width 0.3s ease;
+                        transition: width 0.3s;
 
-                        &.fill-blue { background: #3b82f6; }
-                        &.fill-orange { background: #f97316; }
-                        &.fill-green { background: #10b981; }
-                        &.fill-purple { background: #a855f7; }
-                        &.fill-red { background: #ef4444; }
+                        &.green { background: #10b981; }
+                        &.orange { background: #f97316; }
+                        &.blue { background: #2563eb; }
+                        &.purple { background: #8b5cf6; }
+                        &.red { background: #ef4444; }
                     }
                 }
             }
 
-            .cat-recent-sequence {
+            .cat-seq-section {
                 margin-top: 1.25rem;
-                padding-top: 1rem;
-                border-top: 1px solid #f1f5f9;
 
-                .cat-seq-title {
-                    font-size: 0.75rem;
-                    font-weight: 700;
+                .cat-seq-lbl {
+                    font-size: 0.7rem;
+                    font-weight: 800;
                     color: #94a3b8;
                     display: block;
                     margin-bottom: 8px;
                 }
 
-                .cat-seq-pills {
+                .cat-seq-tiles {
                     display: flex;
                     gap: 6px;
                     flex-wrap: wrap;
 
-                    .cat-pill {
+                    .cat-tile {
                         width: 28px;
                         height: 28px;
                         border-radius: 6px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 0.85rem;
+                        font-size: 0.8rem;
                         font-weight: 800;
                         color: #ffffff;
 
-                        &.pill-even { background: #10b981; }
-                        &.pill-odd { background: #f97316; }
-                        &.pill-rise { background: #10b981; }
-                        &.pill-fall { background: #ef4444; }
+                        &.tile-green { background: #10b981; }
+                        &.tile-gray { background: #64748b; }
+                        &.tile-blue { background: #2563eb; }
+                        &.tile-purple { background: #8b5cf6; }
+                        &.tile-orange { background: #f97316; }
+                        &.tile-red { background: #ef4444; }
                     }
                 }
             }
         }
     }
 
-    /* Mobile Responsiveness (Screens <= 768px) */
+    /* Mobile specific rules */
     @media (max-width: 768px) {
-        padding: 0.75rem 0.5rem;
+        padding: 0.75rem 0.75rem 5rem;
 
-        .cat-header-card {
-            flex-direction: column;
-            align-items: stretch;
+        .cat-top-card {
             padding: 1rem;
-            gap: 1rem;
 
-            .cat-controls-group {
-                width: 100%;
-            }
-
-            .cat-inputs-row {
+            .cat-controls-flex {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 0.75rem;
@@ -424,62 +416,17 @@
 
                 .cat-toggle-label {
                     grid-column: span 2;
-                    margin-top: 4px;
+                    margin-top: 2px;
                 }
             }
+        }
 
-            .cat-price-banner {
-                width: 100%;
-                box-sizing: border-box;
-                padding: 1rem;
-                margin-top: 0.5rem;
-            }
+        .cat-bottom-cards {
+            grid-template-columns: 1fr;
         }
 
         .cat-panel {
             padding: 1rem;
-
-            .cat-panel-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.75rem;
-
-                .cat-legend {
-                    flex-wrap: wrap;
-                    gap: 0.5rem 0.75rem;
-                }
-            }
-
-            .cat-digit-rings-grid {
-                display: flex;
-                overflow-x: auto;
-                padding-bottom: 0.5rem;
-                gap: 8px;
-                -webkit-overflow-scrolling: touch;
-
-                &::-webkit-scrollbar {
-                    height: 4px;
-                }
-                &::-webkit-scrollbar-thumb {
-                    background: #cbd5e1;
-                    border-radius: 4px;
-                }
-
-                .cat-ring-card {
-                    min-width: 68px;
-                    flex-shrink: 0;
-                    padding: 14px 6px 10px;
-                }
-            }
-        }
-
-        .cat-grid-four {
-            grid-template-columns: 1fr !important;
-            gap: 1rem;
-
-            .cat-sub-card {
-                padding: 1rem;
-            }
         }
     }
 }
