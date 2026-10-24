@@ -41,15 +41,14 @@ interface FreeBotsProps {
 const FreeBots: React.FC<FreeBotsProps> = ({ handleTabChange }) => {
     const { load_modal } = useStore();
 
-    const handleLoadBot = async (bot: BotCard) => {
+   const handleLoadBot = async (bot: BotCard) => {
         try {
             const response = await fetch(bot.xmlUrl);
             const xmlText = await response.text();
 
-            // 1. Switch tab first so the Bot Builder SVG workspace is mounted and visible
+            // 1. Switch to Bot Builder tab so the canvas is mounted
             handleTabChange(DBOT_TABS.BOT_BUILDER);
 
-            // 2. Allow the DOM to paint the workspace before injecting strategy blocks
             setTimeout(async () => {
                 try {
                     const blockly = (window as any).Blockly;
@@ -58,11 +57,11 @@ const FreeBots: React.FC<FreeBotsProps> = ({ handleTabChange }) => {
                     const parser = new DOMParser();
                     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                    // Deriv's official store loader (expects a parsed XML DOM Document)
+                    // 2. Use Deriv's official loadStrategy method
                     if (typeof load_modal?.loadStrategy === 'function') {
                         await load_modal.loadStrategy(xmlDoc);
                     } else if (workspace && blockly) {
-                        // Direct workspace injection fallback with suppressed validation events
+                        // 3. Fallback: silent domToWorkspace injection
                         blockly.Events.disable();
                         workspace.clear();
 
@@ -74,15 +73,9 @@ const FreeBots: React.FC<FreeBotsProps> = ({ handleTabChange }) => {
                         if (typeof workspace.cleanUp === 'function') {
                             workspace.cleanUp();
                         }
-                        if (typeof workspace.centerOnBlock === 'function') {
-                            const topBlocks = workspace.getTopBlocks(true);
-                            if (topBlocks.length > 0) {
-                                workspace.centerOnBlock(topBlocks[0].id);
-                            }
-                        }
                     }
-                } catch (innerError) {
-                    console.error('Error during workspace XML insertion:', innerError);
+                } catch (loadErr) {
+                    console.error('Workspace load error:', loadErr);
                 }
             }, 100);
         } catch (error) {
