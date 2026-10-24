@@ -348,7 +348,7 @@ const AnalysisTool: React.FC = () => {
 
                         return (
                             <div key={item.digit} className={`cat-ring-card ${ringClass} ${isLatest ? 'is-latest' : ''}`}>
-                                {isLatest && <span className="cat-latest-marker">●</span>}
+                                {isLatest && <span className="cat-latest-marker" />}
                                 <div className="cat-ring-circle">
                                     <span className="cat-ring-digit">{item.digit}</span>
                                 </div>
