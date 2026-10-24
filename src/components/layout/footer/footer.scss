@@ -111,21 +111,101 @@
         opacity: 0.2;
     }
 }
-.risk-disclaimer-container {
-  padding: 12px 24px;
-  background-color: var(--brand-black, #0f172a);
-  border-top: 1px solid var(--brand-grey-800, #1e293b);
-  text-align: center;
-}
-
-.risk-disclaimer-text {
-  font-size: 0.75rem;
-  line-height: 1.4;
+.risk-disclaimer-btn {
+  background: transparent;
+  border: none;
   color: var(--brand-grey-400, #94a3b8);
-  margin: 0 auto;
-  max-width: 1100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover {
+    background-color: var(--brand-grey-800, #1e293b);
+    color: var(--brand-white, #ffffff);
+  }
+
+  .risk-icon {
+    font-size: 0.85rem;
+  }
 }
 
-.risk-disclaimer-text strong {
-  color: var(--brand-warning, #f59e0b);
+.risk-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.risk-modal-content {
+  background-color: var(--brand-grey-900, #0f172a);
+  color: var(--brand-grey-200, #e2e8f0);
+  border: 1px solid var(--brand-grey-700, #334155);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+
+  .risk-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--brand-warning, #f59e0b);
+    }
+
+    .risk-modal-close {
+      background: none;
+      border: none;
+      color: var(--brand-grey-400, #94a3b8);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+
+      &:hover {
+        color: var(--brand-white, #ffffff);
+      }
+    }
+  }
+
+  .risk-modal-body {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .risk-modal-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+
+    .risk-modal-confirm-btn {
+      background-color: var(--brand-primary, #0096ff);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
 }
