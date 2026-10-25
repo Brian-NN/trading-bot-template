@@ -31,6 +31,16 @@ const BOTS_LIST: BotCard[] = [
         accentDark: '#15803d',
         xmlUrl: '/bots/EO_AI.xml',
     },
+      {
+        id: 'even-odd-switching',
+        title: 'EOS',
+        description: 'Follows the more frequent digit parity, with Martingale recovery and a max-stake stop.',
+        tags: ['Even / Odd', 'Vol 50 (1s)'],
+        art: 'evenodd',
+        accent: '#16a34a',
+        accentDark: '#15803d',
+        xmlUrl: '/bots/fixed_switching_bot.xml',
+    },
 ];
 
 /* ---------- Built-in illustrations (no image files needed) ---------- */
