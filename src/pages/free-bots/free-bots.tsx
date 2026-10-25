@@ -80,51 +80,64 @@ const FreeBots: React.FC<FreeBotsProps> = ({ handleTabChange }) => {
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const handleLoadBot = async (bot: BotCard) => {
-        if (loadingId) return; // ignore double clicks
-        setError(null);
-        setLoadingId(bot.id);
-        try {
-            const response = await fetch(bot.xmlUrl);
-            if (!response.ok) throw new Error(`Bot file not found: ${bot.xmlUrl}`);
-            const xmlText = await response.text();
-            if (!xmlText.trim().startsWith('<xml')) {
-                throw new Error(`${bot.xmlUrl} is not a bot XML file (is the path right?)`);
-            }
+const handleLoadBot = async (bot: BotCard) => {
+    if (loadingId) return;
+    setError(null);
+    setLoadingId(bot.id);
 
-            handleTabChange(DBOT_TABS.BOT_BUILDER);
-
-            // Wait up to 5 seconds for the workspace instead of guessing
-            const blockly = (window as any).Blockly;
-            let tries = 0;
-            while (!blockly?.derivWorkspace && tries < 50) {
-                await new Promise(r => setTimeout(r, 100));
-                tries++;
-            }
-            const workspace = blockly?.derivWorkspace;
-            if (!workspace) throw new Error('The Bot Builder did not become ready');
-
-            if (typeof load_modal?.loadStrategy === 'function') {
-                const xmlDoc = new DOMParser().parseFromString(xmlText, 'text/xml');
-                await load_modal.loadStrategy(xmlDoc);
-            } else {
-                blockly.Events.disable();
-                try {
-                    workspace.clear();
-                    const xmlDom = blockly.utils.xml.textToDom(xmlText);
-                    blockly.Xml.domToWorkspace(xmlDom, workspace);
-                    workspace.cleanUp?.();
-                } finally {
-                    blockly.Events.enable();
-                }
-            }
-        } catch (e) {
-            console.error('Failed to load bot:', e);
-            setError(e instanceof Error ? e.message : 'Could not load this bot.');
-        } finally {
-            setLoadingId(null);
+    try {
+        const response = await fetch(bot.xmlUrl);
+        if (!response.ok) throw new Error(`Bot file not found: ${bot.xmlUrl}`);
+        const xmlText = await response.text();
+        if (!xmlText.trim().startsWith('<xml')) {
+            throw new Error(`${bot.xmlUrl} is not a valid bot XML file.`);
         }
-    };
+
+        // 1. Switch to the Bot Builder tab
+        handleTabChange(DBOT_TABS.BOT_BUILDER);
+
+        // 2. Wait for Deriv Blockly workspace and active symbols to initialize
+        const blockly = (window as any).Blockly;
+        let tries = 0;
+        while (!blockly?.derivWorkspace && tries < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            tries++;
+        }
+
+        const workspace = blockly?.derivWorkspace;
+        if (!workspace) throw new Error('The Bot Builder did not become ready.');
+
+        // Allow a brief tick for the Deriv WebSocket symbol list to cache
+        await new Promise(r => setTimeout(r, 300));
+
+        // 3. Load using Deriv's native strategy loader
+        if (typeof load_modal?.loadStrategy === 'function') {
+            const xmlBlob = new Blob([xmlText], { type: 'application/xml' });
+            const xmlFile = new File([xmlBlob], `${bot.id}.xml`, { type: 'application/xml' });
+            await load_modal.loadStrategy(xmlFile);
+        } else {
+            // Fallback: Direct workspace load
+            workspace.clear();
+            const xmlDom = blockly.utils.xml.textToDom(xmlText);
+            blockly.Xml.domToWorkspace(xmlDom, workspace);
+
+            // Re-render the trade definition block so dropdowns refresh
+            const tradeDefBlock = workspace.getAllBlocks(false).find(
+                (b: any) => b.type === 'trade_definition'
+            );
+            if (tradeDefBlock) {
+                tradeDefBlock.initSvg?.();
+                tradeDefBlock.render?.();
+            }
+            workspace.cleanUp?.();
+        }
+    } catch (e) {
+        console.error('Failed to load bot:', e);
+        setError(e instanceof Error ? e.message : 'Could not load this bot.');
+    } finally {
+        setLoadingId(null);
+    }
+};
 
     return (
         <div className='free-bots-container'>
